@@ -164,6 +164,61 @@ class TestConvertEndpoint:
         assert response.status_code == 200
         assert data['error'] is None
         assert data['result'] == 'minus forty-two'
+    
+    def test_convert_negative_to_binary_bug(self, client):
+        """Test that negative numbers convert to binary correctly (should detect bug)."""
+        response = client.post('/convert',
+                             data=json.dumps({
+                                 'input': '-42',
+                                 'inputType': 'decimal',
+                                 'outputType': 'binary'
+                             }),
+                             content_type='application/json')
+        
+        data = json.loads(response.data)
+        assert response.status_code == 200
+        assert data['error'] is None
+        # This should be a proper binary representation, not '-101010'
+        # The current implementation will return '-101010' which is invalid
+        assert not data['result'].startswith('-'), f"Binary result should not start with '-', got: {data['result']}"
+        # Should be a valid binary string (only 0s and 1s)
+        assert all(c in '01' for c in data['result']), f"Binary result should only contain 0s and 1s, got: {data['result']}"
+    
+    def test_convert_negative_to_octal_bug(self, client):
+        """Test that negative numbers convert to octal correctly (should detect bug)."""
+        response = client.post('/convert',
+                             data=json.dumps({
+                                 'input': '-42',
+                                 'inputType': 'decimal',
+                                 'outputType': 'octal'
+                             }),
+                             content_type='application/json')
+        
+        data = json.loads(response.data)
+        assert response.status_code == 200
+        assert data['error'] is None
+        # This should be a proper octal representation, not '-52'
+        assert not data['result'].startswith('-'), f"Octal result should not start with '-', got: {data['result']}"
+        # Should be a valid octal string (only 0-7)
+        assert all(c in '01234567' for c in data['result']), f"Octal result should only contain 0-7, got: {data['result']}"
+    
+    def test_convert_negative_to_hex_bug(self, client):
+        """Test that negative numbers convert to hexadecimal correctly (should detect bug)."""
+        response = client.post('/convert',
+                             data=json.dumps({
+                                 'input': '-42',
+                                 'inputType': 'decimal',
+                                 'outputType': 'hexadecimal'
+                             }),
+                             content_type='application/json')
+        
+        data = json.loads(response.data)
+        assert response.status_code == 200
+        assert data['error'] is None
+        # This should be a proper hex representation, not '-2a'
+        assert not data['result'].startswith('-'), f"Hex result should not start with '-', got: {data['result']}"
+        # Should be a valid hex string (only 0-9, a-f)
+        assert all(c in '0123456789abcdef' for c in data['result'].lower()), f"Hex result should only contain 0-9, a-f, got: {data['result']}"
 
 
 class TestErrorHandling:
