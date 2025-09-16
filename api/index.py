@@ -9,7 +9,7 @@ app = Flask(__name__)
 def text_to_number(text):
     """Convert English text number to integer"""
     # Remove any non-alphanumeric characters and convert to lowercase
-    text = re.sub(r'[^a-zA-Z\s-]', '', text.lower())
+    text = re.sub(r'[^a-zA-Z\s-]', '', text.lower()).strip()
     
     # Special case for zero
     if text in ['zero', 'nil']:
@@ -24,6 +24,21 @@ def text_to_number(text):
     if text in number_words:
         return number_words[text]
     
+    # Try using text2digits for more complex numbers
+    try:
+        from text2digits import text2digits
+        t2d = text2digits.Text2Digits()
+        result = t2d.convert(text)
+        if result.isdigit():
+            return int(result)
+    except:
+        pass
+    
+    # Try to handle hyphenated words by removing hyphens
+    text_no_hyphen = text.replace('-', '')
+    if text_no_hyphen in number_words:
+        return number_words[text_no_hyphen]
+    
     raise ValueError("Unable to convert text to number")
 
 def number_to_text(number):
@@ -34,20 +49,24 @@ def number_to_text(number):
         raise ValueError("Unable to convert number to text")
 
 def base64_to_number(b64_str):
-    """Convert base64 to integer"""
+    """Convert base64 to integer using little-endian byte order"""
     try:
         # Decode base64 to bytes, then convert bytes to integer
         decoded_bytes = base64.b64decode(b64_str)
-        return int.from_bytes(decoded_bytes, byteorder='big')
+        return int.from_bytes(decoded_bytes, byteorder='little')
     except:
         raise ValueError("Invalid base64 input")
 
 def number_to_base64(number):
-    """Convert integer to base64"""
+    """Convert integer to base64 using little-endian byte order"""
     try:
+        # Handle zero case specially
+        if number == 0:
+            return base64.b64encode(b'\x00').decode('utf-8')
+        
         # Convert integer to bytes, then encode to base64
         byte_count = (number.bit_length() + 7) // 8
-        number_bytes = number.to_bytes(byte_count, byteorder='big')
+        number_bytes = number.to_bytes(byte_count, byteorder='little')
         return base64.b64encode(number_bytes).decode('utf-8')
     except:
         raise ValueError("Unable to convert to base64")
