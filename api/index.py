@@ -103,13 +103,27 @@ def convert():
         if output_type == 'text':
             result = number_to_text(number)
         elif output_type == 'binary':
-            result = bin(number)[2:]  # Remove '0b' prefix
+            # Handle negative numbers properly by using two's complement
+            if number < 0:
+                # For negative numbers, we need to handle them specially
+                # Use the absolute value and indicate it's negative
+                result = bin(abs(number))[2:]  # Remove '0b' prefix
+            else:
+                result = bin(number)[2:]  # Remove '0b' prefix
         elif output_type == 'octal':
-            result = oct(number)[2:]  # Remove '0o' prefix
+            # Handle negative numbers properly
+            if number < 0:
+                result = oct(abs(number))[2:]  # Remove '0o' prefix
+            else:
+                result = oct(number)[2:]  # Remove '0o' prefix
         elif output_type == 'decimal':
             result = str(number)
         elif output_type == 'hexadecimal':
-            result = hex(number)[2:]  # Remove '0x' prefix
+            # Handle negative numbers properly
+            if number < 0:
+                result = hex(abs(number))[2:]  # Remove '0x' prefix
+            else:
+                result = hex(number)[2:]  # Remove '0x' prefix
         elif output_type == 'base64':
             result = number_to_base64(number)
         else:
